@@ -6,10 +6,10 @@ import Button from "@/components/ds/Button";
 import Modal from "@/components/ds/Modal";
 import TxForm from "@/components/forms/TxForm";
 import type { AnyTransaction } from "@/lib/types";
-import { canDeleteTransaction, canEditTransaction } from "@/lib/utils/tx-rules";
-import { finalizeFromForm } from "@/lib/utils/tx";
 import { getTxActionState } from "@/lib/utils/tx-actions";
+import { finalizeFromForm } from "@/lib/utils/tx";
 import Badge from "./ds/Badge";
+import Input from "./ds/Input";
 
 export default function TxTable() {
   const { transactions, fetchAll, cancel, restore, patch, add, loading } = useTxStore();
@@ -26,28 +26,16 @@ export default function TxTable() {
     );
   }, [transactions, query]);
 
-  const transactionTranslation = {
-    type: {
-      "deposit": "Depósito",
-      "transfer": "Transferência",
-      "payment": "Pagamento",
-      "withdraw": "Saque",
-      "pix": "Pix"
-    },
-    status: {
-      "scheduled": "Agendado",
-      "processing": "Em processamento",
-      "processed": "Finalizado",
-      "cancelled": "Cancelado",
-      "failed": "Falha"
-    }
-  }
+  const tLabel = {
+    type: { deposit: "Depósito", transfer: "Transferência", payment: "Pagamento", withdraw: "Saque", pix: "Pix" },
+    status: { scheduled: "Agendado", processing: "Em processamento", processed: "Finalizado", cancelled: "Cancelado", failed: "Falha" }
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <input
-          placeholder="Buscar por descrição ou tipo:"
-          className="w-full rounded-xl2 bg-white/5 border border-white/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+        <Input
+          placeholder="Buscar por descrição ou tipo"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Buscar transações"
@@ -55,9 +43,9 @@ export default function TxTable() {
         <Button onClick={() => setCreateOpen(true)}>Nova</Button>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-white/10">
+      <div className="overflow-x-auto rounded-2xl border bg-white dark:bg-transparent border-gray-200 dark:border-white/10">
         <table className="min-w-full text-sm">
-          <thead className="bg-white/5">
+          <thead className="bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-white">
             <tr>
               <th className="text-left p-3">Data</th>
               <th className="text-left p-3">Descrição</th>
@@ -67,18 +55,21 @@ export default function TxTable() {
               <th className="text-right p-3">Ações</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-gray-900 dark:text-white">
             {filtered.map((t) => {
               const date = new Date(t.date).toLocaleDateString("pt-BR");
               const negative = t.type === "withdraw" || t.type === "payment" || t.type === "pix";
+              const rowClasses =
+                "border-t border-gray-200 dark:border-white/10 hover:bg-gray-50/80 dark:hover:bg-white/5 transition-colors" +
+                (t.status === "cancelled" ? " opacity-60 line-through" : "");
               return (
-                <tr key={t.id}
-                  className={"border-t border-white/5" + (t.status === "cancelled" ? "opacity-60 line-through" : "")}
-                  aria-disabled={t.status === "cancelled"}>
-                  <td className="p-3">{date}</td>
+                <tr key={t.id} className={rowClasses} aria-disabled={t.status === "cancelled"}>
+                  <td className="p-3 whitespace-nowrap">{date}</td>
                   <td className="p-3">{t.description}</td>
-                  <td className="p-3 capitalize">{transactionTranslation.type[t.type]}</td>
-                  <td className="p-3 text-right">{negative ? "-" : ""}{currencyBRL(t.amount)}</td>
+                  <td className="p-3 capitalize">{tLabel.type[t.type]}</td>
+                  <td className={"p-3 text-right tabular-nums font-medium " + (negative ? "text-red-600 dark:text-red-300" : "text-green-700 dark:text-green-300")}>
+                    {negative ? "-" : ""}{currencyBRL(t.amount)}
+                  </td>
                   <td className="p-3">
                     <Badge
                       color={
@@ -86,11 +77,9 @@ export default function TxTable() {
                           ? "green"
                           : t.status === "processing"
                             ? "yellow"
-                            : t.status === "scheduled"
-                              ? "slate"
-                              : t.status === "cancelled"
-                                ? "red"
-                                : "slate"
+                            : t.status === "cancelled"
+                              ? "red"
+                              : "slate"
                       }
                       title={
                         t.status === "processing" && (t as any).processingUntil
@@ -98,14 +87,13 @@ export default function TxTable() {
                           : undefined
                       }
                     >
-                      {transactionTranslation.status[t.status]}
+                      {tLabel.status[t.status]}
                     </Badge>
                   </td>
                   <td className="p-3 text-right">
                     <div className="inline-flex gap-2">
                       {(() => {
                         const { editDisabled, deleteDisabled, editReason, deleteReason } = getTxActionState(t);
-
                         return (
                           <>
                             <Button
@@ -117,7 +105,9 @@ export default function TxTable() {
                             >
                               Editar
                             </Button>
-                            {t.status === "cancelled" ? <Button variant="ghost" onClick={() => restore(t.id)}>Restaurar</Button> :
+                            {t.status === "cancelled" ? (
+                              <Button variant="ghost" onClick={() => restore(t.id)}>Restaurar</Button>
+                            ) : (
                               <Button
                                 variant={deleteDisabled ? "disabled" : "danger"}
                                 disabled={deleteDisabled}
@@ -127,7 +117,7 @@ export default function TxTable() {
                               >
                                 Cancelar
                               </Button>
-                            }
+                            )}
                           </>
                         );
                       })()}
@@ -136,6 +126,13 @@ export default function TxTable() {
                 </tr>
               );
             })}
+            {!loading && filtered.length === 0 && (
+              <tr>
+                <td colSpan={6} className="p-6 text-center text-gray-600 dark:text-gray-400">
+                  Nenhuma transação encontrada.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -164,6 +161,6 @@ export default function TxTable() {
           }}
         />
       </Modal>
-    </div >
+    </div>
   );
 }

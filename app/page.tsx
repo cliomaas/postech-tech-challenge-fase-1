@@ -20,10 +20,14 @@ export default function HomePage() {
         <BalanceCard />
         <Card className="p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Nova transação</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+              Nova transação
+            </h3>
             <Button onClick={() => setOpen(true)}>Adicionar</Button>
           </div>
-          <p className="mt-2 text-sm text-white/60">Crie uma transação rapidamente.</p>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Crie uma transação rapidamente.
+          </p>
         </Card>
       </div>
 

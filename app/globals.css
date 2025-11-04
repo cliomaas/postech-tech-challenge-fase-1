@@ -1,11 +1,22 @@
-/* Tailwind v4 */
 @import "tailwindcss";
 
-/* seus tokens (antes ficavam no tailwind.config) */
+@config "../tailwind.config.ts";
+
+/* TOKENS – LIGHT (padrão) */
+/* stylelint-disable-next-line at-rule-no-unknown */
 @theme {
-  /* cores surface */
-  --color-surface-50: #0f141b;
-  --color-surface-100: #111827;
+
+  --color-bg: #ffffff;
+  --color-fg: #111827;
+
+  --color-surface-50: #f8fafc;
+
+  --color-surface-100: #e5e7eb;
+
+
+  --color-card: #f8fafc;
+  --color-border: #e5e7eb;
+  --color-input: #eef2f7;
 
   /* brand scale */
   --color-brand-50: #eef8ff;
@@ -28,9 +39,33 @@
   --radius-xl2: 1rem;
 }
 
-/* estilos base que você já tinha */
+/* DARK */
+.dark {
+  --color-bg: #0b1020;
+  --color-fg: #e5e7eb;
+  --color-muted: #9ca3af;
+
+  --color-card: #121a2c;
+  --color-border: #1f2937;
+  --color-input: #0f141f;
+
+  --color-surface-50: #0f141b;
+
+  --color-surface-100: #111827;
+
+  /* brand – contrast variations */
+  --color-brand-400: #5aa8ff;
+  --color-brand-500: #2f87ff;
+  --color-brand-600: #60a5fa;
+}
+
+/* base */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
 }
 
 html,
@@ -39,9 +74,21 @@ body {
 }
 
 body {
-  @apply bg-surface-50 text-white;
+  @apply bg-bg text-fg;
 }
 
 .container {
   @apply max-w-5xl mx-auto px-4;
+}
+
+.card {
+  @apply bg-surface-50 border border-surface-100 rounded-[var(--radius-xl2)] p-4;
+}
+
+.btn-primary {
+  @apply bg-brand-500 text-fg rounded-[var(--radius-xl2)] px-3 py-2;
+}
+
+.btn-primary:hover {
+  @apply bg-brand-600;
 }

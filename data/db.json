@@ -42,6 +42,14 @@
       "status": "processed",
       "processingUntil": "2025-11-03T01:36:02.861Z",
       "id": "u2UbP2d"
+    },
+    {
+      "type": "deposit",
+      "description": "LALALA",
+      "amount": 10,
+      "date": "2025-11-20T00:00:00.000Z",
+      "status": "scheduled",
+      "id": "371yUb5"
     }
   ]
 }
