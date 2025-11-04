@@ -5,7 +5,7 @@ import Button from "@/components/ds/Button";
 import Input from "@/components/ds/Input";
 import Select from "@/components/ds/Select";
 import type { AnyTransaction, PixType, Transaction, TransactionType } from "@/lib/types";
-import { toISODateOnly, toISOFromDatetimeLocal } from "@/lib/utils/date";
+import { getTodayISO, toISODateOnly, toISOFromDatetimeLocal } from "@/lib/utils/date";
 import { FormPayload, buildFormPayload } from "@/lib/utils/tx";
 
 type Props = {
@@ -19,9 +19,9 @@ export default function TxForm({ initial, onSubmit }: Props) {
   const [type, setType] = useState(initial?.type ?? "deposit");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [amount, setAmount] = useState(initial?.amount?.toString() ?? "");
-  const [date, setDate] = useState(
-    initial?.date ? initial.date.slice(0, 10) : new Date().toISOString().slice(0, 10)
-  );
+  const isEdit = Boolean(initial?.id);
+  const [date, setDate] = useState<string>(initial?.date ?? getTodayISO());
+  const minDate = getTodayISO();
 
   const [pixType, setPixType] = useState(
     initial?.type === "pix" ? initial.pixType : "normal"
@@ -30,15 +30,26 @@ export default function TxForm({ initial, onSubmit }: Props) {
     initial?.type === "pix" && initial.scheduledFor ? initial.scheduledFor : ""
   );
 
-
   const [loading, setLoading] = useState(false);
-
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // ✅ bloqueios de data anterior a hoje
+      if (type !== "pix") {
+        if (toISODateOnly(date) < minDate) {
+          alert("A data não pode ser anterior a hoje.");
+          return;
+        }
+      } else if (pixType === "scheduled") {
+        if (toISODateOnly(scheduledFor) < minDate) {
+          alert("A data de agendamento não pode ser anterior a hoje.");
+          return;
+        }
+      }
+
       const common = {
         description,
         amount: Number(amount),
@@ -49,7 +60,6 @@ export default function TxForm({ initial, onSubmit }: Props) {
       await onSubmit(payload);
     } catch (err) {
       console.error("Erro ao salvar transação:", err);
-      // TODO: snackbar para user
       alert("Não foi possível salvar a transação. Tente novamente.");
     } finally {
       setLoading(false);
@@ -97,6 +107,7 @@ export default function TxForm({ initial, onSubmit }: Props) {
               label="Agendar para"
               type="date"
               value={scheduledFor}
+              min={minDate}
               onChange={(e) => setScheduledFor(e.target.value)}
               required
             />
@@ -120,13 +131,17 @@ export default function TxForm({ initial, onSubmit }: Props) {
         required
       />
 
-
-      {type !== "pix" && <Input
-        label="Data"
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-      />}
+      {type !== "pix" && (
+        <Input
+          label="Data"
+          type="date"
+          value={date}
+          min={minDate}
+          onChange={(e) => setDate(e.target.value)}
+          required
+          aria-invalid={date < minDate}
+        />
+      )}
 
       <div className="text-right">
         <Button type="submit" disabled={loading}>

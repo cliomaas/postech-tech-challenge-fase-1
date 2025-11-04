@@ -13,3 +13,17 @@ export function toISODateOnly(date: string): string {
 export function toISOFromDatetimeLocal(datetime: string): string {
     return datetime ? new Date(datetime).toISOString() : "";
 }
+
+/**
+ * 
+ * Returns today date in ISO
+ */
+export function getTodayISO(): string {
+    const now = new Date();
+    // normaliza para “meia-noite” local, evitando bugs de timezone
+    const local = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yyyy = local.getFullYear();
+    const mm = String(local.getMonth() + 1).padStart(2, "0");
+    const dd = String(local.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+}
