@@ -1,22 +1,31 @@
 import { ComponentProps } from "react";
 import { clsx } from "clsx";
 
-type Props = ComponentProps<"input"> & { label?: string; hint?: string; };
+type Props = ComponentProps<"input"> & { label?: string; hint?: string };
 
 export default function Input({ label, hint, className, id, ...props }: Props) {
   const input = (
     <input
       id={id}
-      className={clsx("w-full rounded-xl2 bg-white/5 border border-white/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500", className)}
+      className={clsx(
+        "w-full rounded-xl2 border px-3 py-2 text-sm transition-colors",
+        "bg-white/5 border-gray-300 text-gray-900 placeholder-gray-400",
+        "dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-white/50",
+        "focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500",
+        className
+      )}
       {...props}
     />
   );
-  if (!label) return input;
+
+  if (!label)
+    return input;
+
   return (
     <label htmlFor={id} className="block text-sm space-y-1">
-      <span className="text-white/80">{label}</span>
+      <span className="text-gray-700 dark:text-white/80">{label}</span>
       {input}
-      {hint && <span className="text-xs text-white/50">{hint}</span>}
+      {hint && <span className="text-xs text-gray-500 dark:text-gray-400">{hint}</span>}
     </label>
   );
 }
