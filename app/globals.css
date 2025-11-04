@@ -1,24 +1,26 @@
 @import "tailwindcss";
-
 @config "../tailwind.config.ts";
 
 /* TOKENS – LIGHT (padrão) */
 /* stylelint-disable-next-line at-rule-no-unknown */
 @theme {
-
+  /* Base */
   --color-bg: #ffffff;
   --color-fg: #111827;
 
+  /* Surfaces scale */
   --color-surface-50: #f8fafc;
-
   --color-surface-100: #e5e7eb;
 
+  --color-surface: var(--color-card);
+  --color-on-surface: var(--color-fg);
 
+  /* Cards/inputs/border */
   --color-card: #f8fafc;
   --color-border: #e5e7eb;
   --color-input: #eef2f7;
 
-  /* brand scale */
+  /* Brand scale  */
   --color-brand-50: #eef8ff;
   --color-brand-100: #d9ecff;
   --color-brand-200: #b7dbff;
@@ -30,12 +32,35 @@
   --color-brand-800: #0f469c;
   --color-brand-900: #0f3c81;
 
-  /* semantic */
+  /* Brand semantical */
+  --color-brand: var(--color-brand-500);
+  --color-on-brand: #0b1220;
+  /* dark text over light brand */
+  --color-brand-ring: rgba(47, 135, 255, 0.35);
+
+  /* Semantic primary */
   --color-success: #16a34a;
   --color-danger: #dc2626;
   --color-warning: #f59e0b;
 
-  /* radius custom */
+  /* Semantic for bg */
+  --color-info-bg: #e6f0ff;
+  --color-info-on: #0b1220;
+  --color-info-ring: rgba(59, 130, 246, 0.35);
+
+  --color-success-bg: #dcfce7;
+  --color-success-on: #062d1f;
+  --color-success-ring: rgba(16, 185, 129, 0.40);
+
+  --color-warning-bg: #fff5d6;
+  --color-warning-on: #291a00;
+  --color-warning-ring: rgba(245, 158, 11, 0.45);
+
+  --color-error-bg: #ffe8ea;
+  --color-error-on: #3b0b0f;
+  --color-error-ring: rgba(244, 63, 94, 0.45);
+
+  /* radius custom  */
   --radius-xl2: 1rem;
 }
 
@@ -50,16 +75,39 @@
   --color-input: #0f141f;
 
   --color-surface-50: #0f141b;
-
   --color-surface-100: #111827;
 
-  /* brand – contrast variations */
+  /* surfaces */
+  --color-surface: var(--color-card);
+  --color-on-surface: var(--color-fg);
+
+  /* Brand contrast */
   --color-brand-400: #5aa8ff;
   --color-brand-500: #2f87ff;
   --color-brand-600: #60a5fa;
+  --color-brand: var(--color-brand-500);
+  --color-on-brand: #0b1220;
+
+  --color-brand-ring: rgba(96, 165, 250, 0.40);
+
+
+  --color-info-bg: #0f172a;
+  --color-info-on: #e5e7eb;
+  --color-info-ring: rgba(148, 163, 184, 0.35);
+
+  --color-success-bg: #053825;
+  --color-success-on: #d1fae5;
+  --color-success-ring: rgba(16, 185, 129, 0.55);
+
+  --color-warning-bg: #3b2a05;
+  --color-warning-on: #fde68a;
+  --color-warning-ring: rgba(245, 158, 11, 0.55);
+
+  --color-error-bg: #401319;
+  --color-error-on: #fecdd3;
+  --color-error-ring: rgba(244, 63, 94, 0.55);
 }
 
-/* base */
 :root {
   color-scheme: light;
 }
@@ -68,6 +116,7 @@
   color-scheme: dark;
 }
 
+/* Base */
 html,
 body {
   height: 100%;
@@ -81,14 +130,95 @@ body {
   @apply max-w-5xl mx-auto px-4;
 }
 
+/* Card util */
 .card {
   @apply bg-surface-50 border border-surface-100 rounded-[var(--radius-xl2)] p-4;
 }
 
 .btn-primary {
-  @apply bg-brand-500 text-fg rounded-[var(--radius-xl2)] px-3 py-2;
+  background-color: var(--color-brand);
+  color: var(--color-on-brand);
+  border-radius: var(--radius-xl2);
+  padding: 0.5rem 0.75rem;
+  /* px-3 py-2 */
 }
 
 .btn-primary:hover {
-  @apply bg-brand-600;
+  background-color: var(--color-brand-600);
+}
+
+@layer utilities {
+
+  .bg-surface {
+    background-color: var(--color-surface);
+  }
+
+  .text-on-surface {
+    color: var(--color-on-surface);
+  }
+
+  /* Brand */
+  .bg-brand {
+    background-color: var(--color-brand);
+  }
+
+  .text-on-brand {
+    color: var(--color-on-brand);
+  }
+
+  .ring-brand {
+    --tw-ring-color: var(--color-brand-ring);
+  }
+
+  /* Info */
+  .bg-info {
+    background-color: var(--color-info-bg);
+  }
+
+  .text-on-info {
+    color: var(--color-info-on);
+  }
+
+  .ring-info {
+    --tw-ring-color: var(--color-info-ring);
+  }
+
+  /* Success */
+  .bg-success {
+    background-color: var(--color-success-bg);
+  }
+
+  .text-on-success {
+    color: var(--color-success-on);
+  }
+
+  .ring-success {
+    --tw-ring-color: var(--color-success-ring);
+  }
+
+  /* Warning */
+  .bg-warning {
+    background-color: var(--color-warning-bg);
+  }
+
+  .text-on-warning {
+    color: var(--color-warning-on);
+  }
+
+  .ring-warning {
+    --tw-ring-color: var(--color-warning-ring);
+  }
+
+  /* Error (Danger) */
+  .bg-error {
+    background-color: var(--color-error-bg);
+  }
+
+  .text-on-error {
+    color: var(--color-error-on);
+  }
+
+  .ring-error {
+    --tw-ring-color: var(--color-error-ring);
+  }
 }

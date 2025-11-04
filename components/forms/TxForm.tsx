@@ -7,6 +7,8 @@ import Select from "@/components/ds/Select";
 import type { AnyTransaction, PixType, Transaction, TransactionType } from "@/lib/types";
 import { getTodayISO, toISODateOnly, toISOFromDatetimeLocal } from "@/lib/utils/date";
 import { FormPayload, buildFormPayload } from "@/lib/utils/tx";
+import { useSnackbar } from "../ds/SnackbarProvider";
+import { getErrorMessage } from "@/lib/utils/errors";
 
 type Props = {
   /** initial values (editing) */
@@ -22,6 +24,7 @@ export default function TxForm({ initial, onSubmit }: Props) {
   const isEdit = Boolean(initial?.id);
   const [date, setDate] = useState<string>(initial?.date ?? getTodayISO());
   const minDate = getTodayISO();
+  const snackbar = useSnackbar();
 
   const [pixType, setPixType] = useState(
     initial?.type === "pix" ? initial.pixType : "normal"
@@ -58,9 +61,10 @@ export default function TxForm({ initial, onSubmit }: Props) {
 
       const payload = buildFormPayload(common, type, { pixType, scheduledFor });
       await onSubmit(payload);
+      snackbar.success("Transação criada com sucesso!")
     } catch (err) {
       console.error("Erro ao salvar transação:", err);
-      alert("Não foi possível salvar a transação. Tente novamente.");
+      snackbar.error(`Erro ao salvar transação. ${getErrorMessage(e)}`)
     } finally {
       setLoading(false);
     }

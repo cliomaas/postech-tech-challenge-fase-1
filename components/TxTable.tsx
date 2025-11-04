@@ -10,9 +10,17 @@ import { getTxActionState } from "@/lib/utils/tx-actions";
 import { finalizeFromForm } from "@/lib/utils/tx";
 import Badge from "./ds/Badge";
 import Input from "./ds/Input";
+import { useSnackbar } from "@/components/ds/SnackbarProvider";
 
 export default function TxTable() {
-  const { transactions, fetchAll, cancel, restore, patch, add, loading } = useTxStore();
+  const { transactions, fetchAll, cancel, restore, patch, add, loading, setNotifier } = useTxStore();
+  const snackbar = useSnackbar();
+
+  useEffect(() => {
+    setNotifier({ success: snackbar.success, error: snackbar.error });
+    return () => setNotifier(undefined);
+  }, [setNotifier, snackbar]);
+
   const [query, setQuery] = useState("");
   const [edit, setEdit] = useState<AnyTransaction | null>(null);
   const [createOpen, setCreateOpen] = useState(false);

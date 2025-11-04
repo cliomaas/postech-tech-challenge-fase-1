@@ -26,30 +26,14 @@
     },
     {
       "type": "pix",
-      "description": "Pix pro jean",
-      "amount": 10000000,
-      "date": "2025-11-03T00:00:00.000Z",
-      "pixType": "normal",
-      "status": "processed",
-      "processingUntil": "2025-11-03T01:35:29.943Z",
-      "id": "8KIrhv2"
-    },
-    {
-      "type": "deposit",
-      "description": "pra coisar",
-      "amount": 200,
-      "date": "2025-11-02T00:00:00.000Z",
-      "status": "processed",
-      "processingUntil": "2025-11-03T01:36:02.861Z",
-      "id": "u2UbP2d"
-    },
-    {
-      "type": "deposit",
-      "description": "LALALA",
-      "amount": 10,
-      "date": "2025-11-20T00:00:00.000Z",
+      "description": "Pix Jô",
+      "amount": 100,
+      "date": "2025-11-04T00:00:00.000Z",
+      "pixType": "scheduled",
       "status": "scheduled",
-      "id": "371yUb5"
+      "scheduledFor": "2025-11-10T00:00:00.000Z",
+      "id": "M2E__CP",
+      "previousStatus": "scheduled"
     }
   ]
 }

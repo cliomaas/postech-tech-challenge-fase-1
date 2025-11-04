@@ -25,17 +25,17 @@ export default function Modal({
     <div
       aria-modal
       role="dialog"
-      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+      className={clsx(
+        "fixed inset-0 z-50 grid place-items-center p-4 transition-colors",
+        "bg-[color:var(--color-bg)]/40 backdrop-blur-[2px]"
+      )}
       onClick={onClose}
     >
       <div
         className={clsx(
-          "w-full max-w-lg rounded-2xl border shadow-lg transition-colors",
-          // ☀️ Light
-          "bg-white border-gray-200 text-gray-900",
-          // 🌙 Dark
-          "dark:bg-surface-100/80 dark:border-white/10 dark:text-white",
-          "p-4"
+          "w-full max-w-lg rounded-[var(--radius-xl2)] border shadow-lg p-4 transition-all",
+          "bg-[color:var(--color-card)]/80 backdrop-blur-md",
+          "border-[color:var(--color-border)] text-[color:var(--color-on-surface)]"
         )}
         onClick={(e) => e.stopPropagation()}
       >

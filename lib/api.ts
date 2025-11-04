@@ -1,4 +1,4 @@
-import type { AnyTransaction } from "@/lib/types";
+import type { AnyTransaction, TransactionStatus } from "@/lib/types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -56,21 +56,21 @@ export async function deleteTransaction(id: string) {
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 }
 
-export async function cancelTransaction(id: string) {
+export async function cancelTransaction(id: string, previousStatus: TransactionStatus) {
     const res = await fetch(`${BASE}/transactions/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "cancelled" }),
+        body: JSON.stringify({ status: "cancelled", previousStatus }),
     });
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
     return res.json();
 }
 
-export async function restoreTransaction(id: string) {
+export async function restoreTransaction(id: string, status: TransactionStatus) {
     const res = await fetch(`${BASE}/transactions/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "confirmed" }), // ou o status anterior que você usar
+        body: JSON.stringify({ status, previousStatus: undefined }),
     });
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
     return res.json();
