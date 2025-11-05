@@ -78,7 +78,7 @@ Componentes principais:
 npm install
 
 # 2. Rodar em modo de desenvolvimento
-npm run dev
+npm run dev:all
 
 # 3. Abrir no navegador
 http://localhost:3000
