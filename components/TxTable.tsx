@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState, useEffect } from "react";
+import { clsx } from "clsx";
 import { useTxStore } from "@/lib/store";
 import { currencyBRL } from "@/lib/utils/currency";
 import Button from "@/components/ds/Button";
@@ -37,7 +38,9 @@ export default function TxTable() {
   const tLabel = {
     type: { deposit: "Depósito", transfer: "Transferência", payment: "Pagamento", withdraw: "Saque", pix: "Pix" },
     status: { scheduled: "Agendado", processing: "Em processamento", processed: "Finalizado", cancelled: "Cancelado", failed: "Falha" }
-  };
+  } as const;
+
+  const negativeTypes = new Set<AnyTransaction["type"]>(["withdraw", "payment", "pix"]);
 
   return (
     <div className="space-y-3">
@@ -51,34 +54,53 @@ export default function TxTable() {
         <Button onClick={() => setCreateOpen(true)}>Nova</Button>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border bg-white dark:bg-transparent border-gray-200 dark:border-white/10">
+      <div
+        role="region"
+        aria-labelledby="tx-table-title"
+        className="overflow-x-auto rounded-[var(--radius-xl2)] border border-[var(--color-border)] bg-surface"
+      >
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-white">
-            <tr>
-              <th className="text-left p-3">Data</th>
-              <th className="text-left p-3">Descrição</th>
-              <th className="text-left p-3">Tipo</th>
-              <th className="text-right p-3">Valor</th>
-              <th className="text-left p-3">Status</th>
-              <th className="text-right p-3">Ações</th>
+          <caption id="tx-table-title" className="sr-only">Lista de transações</caption>
+
+          <thead className="sticky top-0 z-10 bg-[var(--color-surface-50)]/85 backdrop-blur text-fg">
+            <tr className="border-b border-[var(--color-border)]/60">
+              <Th>Data</Th>
+              <Th>Descrição</Th>
+              <Th>Tipo</Th>
+              <Th right>Valor</Th>
+              <Th>Status</Th>
+              <Th right>Ações</Th>
             </tr>
           </thead>
-          <tbody className="text-gray-900 dark:text-white">
-            {filtered.map((t) => {
+
+          <tbody className="text-fg">
+            {filtered.map((t, idx) => {
               const date = new Date(t.date).toLocaleDateString("pt-BR");
-              const negative = t.type === "withdraw" || t.type === "payment" || t.type === "pix";
-              const rowClasses =
-                "border-t border-gray-200 dark:border-white/10 hover:bg-gray-50/80 dark:hover:bg-white/5 transition-colors" +
-                (t.status === "cancelled" ? " opacity-60 line-through" : "");
+              const negative = negativeTypes.has(t.type);
+
+              const row = clsx(
+                "transition-colors",
+                "border-b border-[var(--color-border)]/60",
+                idx % 2 === 0 ? "bg-[color:var(--color-surface-50)]/40" : "bg-transparent",
+                "hover:bg-[color:var(--color-surface-50)]/80",
+                t.status === "cancelled" && "opacity-60 line-through"
+              );
+
               return (
-                <tr key={t.id} className={rowClasses} aria-disabled={t.status === "cancelled"}>
-                  <td className="p-3 whitespace-nowrap">{date}</td>
-                  <td className="p-3">{t.description}</td>
-                  <td className="p-3 capitalize">{tLabel.type[t.type]}</td>
-                  <td className={"p-3 text-right tabular-nums font-medium " + (negative ? "text-red-600 dark:text-red-300" : "text-green-700 dark:text-green-300")}>
+                <tr key={t.id} className={row} aria-disabled={t.status === "cancelled"}>
+                  <Td>{date}</Td>
+                  <Td className="max-w-[28ch] truncate">
+                    <span title={t.description}>{t.description}</span>
+                  </Td>
+
+                  <Td className="capitalize">{tLabel.type[t.type]}</Td>
+                  <Td right className={clsx(
+                    "tabular-nums font-medium",
+                    negative ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"
+                  )}>
                     {negative ? "-" : ""}{currencyBRL(t.amount)}
-                  </td>
-                  <td className="p-3">
+                  </Td>
+                  <Td>
                     <Badge
                       color={
                         t.status === "processed"
@@ -97,8 +119,8 @@ export default function TxTable() {
                     >
                       {tLabel.status[t.status]}
                     </Badge>
-                  </td>
-                  <td className="p-3 text-right">
+                  </Td>
+                  <Td right>
                     <div className="inline-flex gap-2">
                       {(() => {
                         const { editDisabled, deleteDisabled, editReason, deleteReason } = getTxActionState(t);
@@ -130,14 +152,17 @@ export default function TxTable() {
                         );
                       })()}
                     </div>
-                  </td>
+                  </Td>
                 </tr>
               );
             })}
+
             {!loading && filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-gray-600 dark:text-gray-400">
-                  Nenhuma transação encontrada.
+                <td colSpan={6} className="p-8">
+                  <div className="text-center text-fg/70">
+                    Nenhuma transação encontrada.
+                  </div>
                 </td>
               </tr>
             )}
@@ -170,5 +195,19 @@ export default function TxTable() {
         />
       </Modal>
     </div>
+  );
+}
+
+/* Sub-componentes semânticos para th/td com alinhamento */
+function Th({ children, right = false }: { children: React.ReactNode; right?: boolean }) {
+  return (
+    <th className={clsx("p-3 text-left text-sm font-semibold", right && "text-right")}>
+      {children}
+    </th>
+  );
+}
+function Td({ children, className, right = false }: { children: React.ReactNode; className?: string; right?: boolean }) {
+  return (
+    <td className={clsx("p-3 align-middle", right && "text-right", className)}>{children}</td>
   );
 }

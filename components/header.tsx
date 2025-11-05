@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import Button from "@/components/ds/Button";
+import { ThemeToggle } from "./ui/ThemeToggle";
 
 export default function Header() {
     const pathname = usePathname();
@@ -55,11 +56,13 @@ export default function Header() {
                             <Link href="/">
                                 <Button variant="ghost">Configurações</Button>
                             </Link>
-                            <Button variant="danger">Sair</Button>
+                            <Link href="/">
+                                <Button variant="danger">Sair</Button>
+                            </Link>
                         </>
                     )}
-                </div>
-            </div>
+                    <ThemeToggle />
+                </div>        </div>
         </header>
     );
 }

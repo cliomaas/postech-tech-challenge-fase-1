@@ -8,6 +8,7 @@ import TxForm from "@/components/forms/TxForm";
 import { useState } from "react";
 import { useTxStore } from "@/lib/store";
 import { finalizeFromForm } from "@/lib/utils/tx";
+import TxList from "@/components/TxList";
 
 export default function HomePage() {
   const [open, setOpen] = useState(false);
@@ -37,7 +38,7 @@ export default function HomePage() {
           <a className="text-sm underline" href="/transactions">Ver todas</a>
         </div>
         <div className="mt-4">
-          <TxTable />
+          <TxList />
         </div>
       </Card>
 

@@ -1,0 +1,227 @@
+"use client";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { clsx } from "clsx";
+import { useTxStore } from "@/lib/store";
+import { currencyBRL } from "@/lib/utils/currency";
+import Button from "@/components/ds/Button";
+import Modal from "@/components/ds/Modal";
+import TxForm from "@/components/forms/TxForm";
+import type { AnyTransaction } from "@/lib/types";
+import { getTxActionState } from "@/lib/utils/tx-actions";
+import { finalizeFromForm } from "@/lib/utils/tx";
+import Input from "./ds/Input";
+import { useSnackbar } from "@/components/ds/SnackbarProvider";
+import Badge from "./ds/Badge";
+
+const tLabel = {
+    type: { deposit: "Depósito", transfer: "Transferência", payment: "Pagamento", withdraw: "Saque", pix: "Pix" },
+    status: { scheduled: "Agendado", processing: "Em processamento", processed: "Finalizado", cancelled: "Cancelado", failed: "Falha" }
+} as const;
+
+const negativeTypes = new Set<AnyTransaction["type"]>(["withdraw", "payment", "pix"]);
+type TxGroup = { dateKey: string; time: number; items: AnyTransaction[]; total: number };
+
+export default function TxList() {
+    const { transactions, fetchAll, cancel, restore, patch, add, loading, setNotifier } = useTxStore();
+    const snackbar = useSnackbar();
+
+    useEffect(() => {
+        setNotifier({ success: snackbar.success, error: snackbar.error });
+        return () => setNotifier(undefined);
+    }, [setNotifier, snackbar]);
+
+    const [query, setQuery] = useState("");
+    const [edit, setEdit] = useState<AnyTransaction | null>(null);
+    const [createOpen, setCreateOpen] = useState(false);
+    const [hiddenCancelled, setHiddenCancelled] = useState<Set<string>>(new Set());
+
+    useEffect(() => { fetchAll(); }, [fetchAll]);
+
+    const filtered = useMemo(() => {
+        const q = query.toLowerCase();
+        return transactions.filter(t =>
+            t.description.toLowerCase().includes(q) || t.type.toLowerCase().includes(q)
+        );
+    }, [transactions, query]);
+
+    const grouped = useMemo<TxGroup[]>(() => {
+        const map = new Map<string, TxGroup>();
+        for (const t of filtered) {
+            const d = new Date(t.date);
+            const dateKey = d.toLocaleDateString("pt-BR");
+            const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+            const signed = negativeTypes.has(t.type) ? -t.amount : t.amount;
+
+            const g = map.get(dateKey);
+            if (g) {
+                g.items.push(t);
+                g.total += signed;
+            } else {
+                map.set(dateKey, { dateKey, time: dayStart, items: [t], total: signed });
+            }
+        }
+        return Array.from(map.values()).sort((a, b) => b.time - a.time);
+    }, [filtered]);
+
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center gap-2">
+                <Input
+                    placeholder="Buscar por descrição ou tipo"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    aria-label="Buscar transações"
+                />
+                <Button onClick={() => setCreateOpen(true)}>Nova</Button>
+            </div>
+
+            <div className="rounded-[var(--radius-xl2)] border border-[var(--color-border)] bg-surface">
+                {grouped.map((g, gi) => (
+                    <Fragment key={g.dateKey}>
+                        <div
+                            className={clsx(
+                                "px-4 py-2 text-xs font-medium tracking-wide flex items-center justify-between",
+                                gi === 0 ? "rounded-t-[var(--radius-xl2)]" : "",
+                                "bg-[color:var(--color-surface-50)]/70 border-b border-[var(--color-border)]/60"
+                            )}
+                        >
+                            <span>{g.dateKey}</span>
+                            <span
+                                className={clsx(
+                                    "tabular-nums font-semibold",
+                                    g.total < 0 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"
+                                )}
+                                title="Total do dia"
+                            >
+                                {g.total < 0 ? "-" : ""}{currencyBRL(Math.abs(g.total))}
+                            </span>
+                        </div>
+
+                        <ul className="divide-y divide-[color:var(--color-border)]/60">
+                            {g.items.map((t) => {
+                                if (hiddenCancelled.has(t.id)) return null;
+                                const negative = negativeTypes.has(t.type);
+                                const { editDisabled, deleteDisabled } = getTxActionState(t);
+
+                                return (
+                                    <li key={t.id}>
+                                        <div
+                                            className={clsx(
+                                                "group px-4 py-3 flex items-center gap-3",
+                                                "hover:bg-[color:var(--color-surface-50)]/80 transition-colors",
+                                                t.status === "cancelled" && "opacity-60"
+                                            )}
+                                        >
+                                            {t.status === "cancelled" && (
+                                                <div className="flex items-center">
+                                                    <button
+                                                        onClick={() => {
+                                                            setHiddenCancelled(new Set(hiddenCancelled).add(t.id));
+                                                        }}
+                                                        title="Ocultar"
+                                                        className="text-fg/60 hover:text-fg transition-colors text-lg leading-none"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            <div className={clsx("flex-1 min-w-0", t.status === "cancelled" && "line-through")}>
+                                                <div className="text-base font-medium truncate">{t.description}</div>
+                                                <div className="text-xs text-fg/70">
+                                                    {tLabel.type[t.type]} · {<Badge
+                                                        color={
+                                                            t.status === "processed"
+                                                                ? "green"
+                                                                : t.status === "processing"
+                                                                    ? "yellow"
+                                                                    : t.status === "cancelled"
+                                                                        ? "red"
+                                                                        : "slate"
+                                                        }
+                                                        title={
+                                                            t.status === "processing" && (t as any).processingUntil
+                                                                ? `Processando até ${new Date((t as any).processingUntil).toLocaleTimeString("pt-BR")}`
+                                                                : undefined
+                                                        }
+                                                    >
+                                                        {tLabel.status[t.status]}
+                                                    </Badge>}
+                                                </div>
+                                            </div>
+                                            <div className="ml-auto flex items-center gap-2 sm:gap-3">
+                                                <div
+                                                    className={clsx(
+                                                        "tabular-nums font-semibold",
+                                                        negative ? "text-[var(--color-danger)]" : "text-[var(--color-success)]",
+                                                        t.status === "cancelled" && "line-through"
+                                                    )}
+                                                >
+                                                    {negative ? "-" : ""}{currencyBRL(t.amount)}
+                                                </div>
+                                                <Button
+                                                    variant={editDisabled ? "disabled" : "ghost"}
+                                                    disabled={editDisabled}
+                                                    onClick={() => setEdit(t)}
+                                                    title={editDisabled ? "Edição desabilitada" : "Editar transação"}
+                                                    aria-disabled={editDisabled}
+                                                >
+                                                    Editar
+                                                </Button>
+
+                                                {t.status === "cancelled" ? (
+                                                    <Button variant="ghost" onClick={() => restore(t.id)}>Restaurar</Button>
+                                                ) : (
+                                                    <Button
+                                                        variant={deleteDisabled ? "disabled" : "danger"}
+                                                        disabled={deleteDisabled}
+                                                        onClick={() => cancel(t.id)}
+                                                        aria-disabled={deleteDisabled}
+                                                    >
+                                                        Cancelar
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </Fragment>
+                ))
+                }
+
+                {
+                    !loading && grouped.length === 0 && (
+                        <div className="p-8 text-center text-fg/70">Nenhuma transação encontrada.</div>
+                    )
+                }
+            </div >
+
+            <Modal open={!!edit} onClose={() => setEdit(null)}>
+                <h3 className="text-lg font-medium mb-3">Editar transação</h3>
+                {edit && (
+                    <TxForm
+                        initial={edit}
+                        onSubmit={async (form) => {
+                            const finalized = finalizeFromForm(form);
+                            await patch(edit.id, finalized);
+                            setEdit(null);
+                        }}
+                    />
+                )}
+            </Modal>
+
+            <Modal open={createOpen} onClose={() => setCreateOpen(false)}>
+                <h3 className="text-lg font-medium mb-3">Nova transação</h3>
+                <TxForm
+                    onSubmit={(form) => {
+                        const txWithoutId = finalizeFromForm(form);
+                        add(txWithoutId);
+                        setCreateOpen(false);
+                    }}
+                />
+            </Modal>
+        </div >
+    );
+}
