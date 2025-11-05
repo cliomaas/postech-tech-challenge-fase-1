@@ -110,7 +110,7 @@ npm run test         # executa testes (caso configurados)
 
 ## 📽️ Entrega / Demonstração
 
-O vídeo de entrega (até **5 minutos**) demonstra:
+O vídeo de entrega demonstra:
 
 1. Acesso à home e visualização do saldo.  
 2. Criação de novas transações.  
