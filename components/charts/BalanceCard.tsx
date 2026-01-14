@@ -2,8 +2,9 @@
 import Card from "@/components/ds/Card";
 import Badge from "@/components/ds/Badge";
 import { useTxStore } from "@/lib/store";
-import { calcBalance, currencyBRL } from "@/lib/utils/currency";
+import { calcBalance } from "@/lib/utils/currency";
 import { clsx } from "clsx";
+import { formatBRL } from "@/src/core/money";
 
 export default function BalanceCard() {
   const txs = useTxStore((s) => s.transactions);
@@ -22,7 +23,7 @@ export default function BalanceCard() {
                 : "text-red-600 dark:text-red-300"
             )}
           >
-            {currencyBRL(balance)}
+            {formatBRL(balance)}
           </p>
         </div>
 

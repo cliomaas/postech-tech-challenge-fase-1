@@ -1,4 +1,6 @@
 import type { AnyTransaction, TransactionStatus } from "@/lib/types";
+import { getTodayISO, dayStartTsFromAny } from "@/lib/utils/date";
+
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -25,7 +27,26 @@ export async function listTransactions(opts?: {
     if (opts?._page) p.set("_page", String(opts._page));
     if (opts?._limit) p.set("_limit", String(opts._limit));
     const res = await fetch(`${BASE}/transactions?${p.toString()}`, { cache: "no-store" });
-    return j<AnyTransaction[]>(res);
+    const data = await j<AnyTransaction[]>(res);
+
+    const todayStart = dayStartTsFromAny(getTodayISO());
+
+    return data.map((tx) => {
+        if (
+            tx.status === "scheduled" &&
+            "scheduledFor" in tx &&
+            tx.scheduledFor &&
+            dayStartTsFromAny(tx.scheduledFor) < todayStart
+        ) {
+            return {
+                ...tx,
+                status: "cancelled",
+                previousStatus: tx.status,
+                locked: true, // impedirá restore na UI
+            };
+        }
+        return tx;
+    });
 }
 
 export async function getTransaction(id: string) {

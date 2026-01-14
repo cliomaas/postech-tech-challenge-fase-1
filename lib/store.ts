@@ -3,7 +3,7 @@ import { create, type StateCreator } from "zustand";
 import type { AnyTransaction, TransactionStatus } from "./types";
 import { listTransactions, createTransaction, updateTransaction, deleteTransaction, cancelTransaction, restoreTransaction } from "./api";
 
-type TxWithRuntime = AnyTransaction & { processingUntil?: string; previousStatus?: TransactionStatus; cancelledAt?: string };
+type TxWithRuntime = AnyTransaction & { processingUntil?: string; previousStatus?: TransactionStatus; cancelledAt?: string, locked?: boolean; };
 
 type Notifier = { success?: (msg: string) => void; error?: (msg: string) => void };
 
@@ -97,7 +97,7 @@ const creator: StateCreator<State> = (set, get) => ({
     if (!t) return;
     set({
       transactions: prev.map(x =>
-        x.id === id ? { ...x, previousStatus: x.status, status: "cancelled" } : x
+        x.id === id ? { ...x, previousStatus: x.status as TransactionStatus, status: "cancelled" as TransactionStatus, locked: true } : x
       ),
     });
     try {

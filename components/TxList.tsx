@@ -3,7 +3,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { clsx } from "clsx";
 import { useTxStore } from "@/lib/store";
-import { currencyBRL } from "@/lib/utils/currency";
 import Button from "@/components/ds/Button";
 import Modal from "@/components/ds/Modal";
 import TxForm from "@/components/forms/TxForm";
@@ -13,6 +12,7 @@ import { finalizeFromForm } from "@/lib/utils/tx";
 import Input from "./ds/Input";
 import { useSnackbar } from "@/components/ds/SnackbarProvider";
 import Badge from "./ds/Badge";
+import { formatBRL } from "@/src/core/money";
 
 const tLabel = {
     type: { deposit: "Depósito", transfer: "Transferência", payment: "Pagamento", withdraw: "Saque", pix: "Pix" },
@@ -66,7 +66,7 @@ export default function TxList() {
     const filtered = useMemo(() => {
         const q = query.toLowerCase();
         return transactions.filter(t =>
-            t.description.toLowerCase().includes(q) || t.type.toLowerCase().includes(q)
+            t.description?.toLowerCase().includes(q) || t.type.toLowerCase().includes(q)
         );
     }, [transactions, query]);
 
@@ -121,7 +121,7 @@ export default function TxList() {
                                 )}
                                 title="Total do dia"
                             >
-                                {g.total < 0 ? "-" : ""}{currencyBRL(Math.abs(g.total))}
+                                {g.total < 0 ? "-" : ""}{formatBRL(Math.abs(g.total))}
                             </span>
                         </div>
 
@@ -158,22 +158,24 @@ export default function TxList() {
                                             <div className={clsx("grow sm:grow-0 min-w-0", t.status === "cancelled" && "line-through")}>
                                                 <div className="text-base font-medium truncate">{t.description}</div>
                                                 <div className="text-xs">
-                                                    <span className="font-medium text-fg">{tLabel.type[t.type]}</span>
+                                                    <span className="font-medium text-fg">{tLabel.type[t.type as keyof typeof tLabel.type] ?? t.type}</span>
                                                     <span className="mx-1 opacity-50">·</span>
-                                                    <Badge
-                                                        color={
-                                                            t.status === "processed" ? "green" :
-                                                                t.status === "processing" ? "yellow" :
-                                                                    t.status === "cancelled" ? "red" : "slate"
-                                                        }
-                                                        title={
-                                                            t.status === "processing" && (t as any).processingUntil
-                                                                ? `Processando até ${new Date((t as any).processingUntil).toLocaleTimeString("pt-BR")}`
-                                                                : undefined
-                                                        }
-                                                    >
-                                                        {tLabel.status[t.status]}
-                                                    </Badge>
+                                                    {t.status && (
+                                                        <Badge
+                                                            color={
+                                                                t.status === "processed" ? "green" :
+                                                                    t.status === "processing" ? "yellow" :
+                                                                        t.status === "cancelled" ? "red" : "slate"
+                                                            }
+                                                            title={
+                                                                t.status === "processing" && (t as any).processingUntil
+                                                                    ? `Processando até ${new Date((t as any).processingUntil).toLocaleTimeString("pt-BR")}`
+                                                                    : undefined
+                                                            }
+                                                        >
+                                                            {tLabel.status[t.status as keyof typeof tLabel.status] ?? t.status}
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -185,7 +187,7 @@ export default function TxList() {
                                                         t.status === "cancelled" && "line-through"
                                                     )}
                                                 >
-                                                    {negative ? "-" : ""}{currencyBRL(t.amount)}
+                                                    {negative ? "-" : ""}{formatBRL(t.amount)}
                                                 </div>
                                                 <Button
                                                     variant={editDisabled ? "disabled" : "ghost"}
@@ -198,7 +200,9 @@ export default function TxList() {
                                                 </Button>
 
                                                 {t.status === "cancelled" ? (
-                                                    <Button variant="ghost" onClick={() => restore(t.id)}>Restaurar</Button>
+                                                    (t as any).locked ? null : (
+                                                        <Button variant="ghost" onClick={() => restore(t.id)}>Restaurar</Button>
+                                                    )
                                                 ) : (
                                                     <Button
                                                         variant={deleteDisabled ? "disabled" : "danger"}

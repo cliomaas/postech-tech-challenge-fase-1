@@ -4,7 +4,7 @@ import { useState } from "react";
 import Button from "@/components/ds/Button";
 import Input from "@/components/ds/Input";
 import Select from "@/components/ds/Select";
-import type { AnyTransaction, PixType, Transaction, TransactionType } from "@/lib/types";
+import type { AnyTransaction, PixType, PixTransaction, Transaction, TransactionType } from "@/lib/types";
 import { getTodayISO, toISODateOnly, toISOFromDatetimeLocal } from "@/lib/utils/date";
 import { FormPayload, buildFormPayload } from "@/lib/utils/tx";
 import { useSnackbar } from "../ds/SnackbarProvider";
@@ -27,10 +27,12 @@ export default function TxForm({ initial, onSubmit }: Props) {
   const snackbar = useSnackbar();
 
   const [pixType, setPixType] = useState(
-    initial?.type === "pix" ? initial.pixType : "normal"
+    initial?.type === "pix" ? (initial as PixTransaction).pixType : "normal"
   );
   const [scheduledFor, setScheduledFor] = useState(
-    initial?.type === "pix" && initial.scheduledFor ? initial.scheduledFor : ""
+    initial?.type === "pix" && (initial as PixTransaction).scheduledFor
+      ? (initial as PixTransaction).scheduledFor
+      : ""
   );
 
   const [loading, setLoading] = useState(false);
@@ -47,7 +49,7 @@ export default function TxForm({ initial, onSubmit }: Props) {
           return;
         }
       } else if (pixType === "scheduled") {
-        if (toISODateOnly(scheduledFor) < minDate) {
+        if (scheduledFor && toISODateOnly(scheduledFor) < minDate) {
           alert("A data de agendamento não pode ser anterior a hoje.");
           return;
         }
@@ -59,7 +61,7 @@ export default function TxForm({ initial, onSubmit }: Props) {
         date: toISODateOnly(date),
       };
 
-      const payload = buildFormPayload(common, type, { pixType, scheduledFor });
+      const payload = buildFormPayload(common, type as TransactionType, { pixType, scheduledFor });
       await onSubmit(payload);
       snackbar.success("Transação criada com sucesso!")
     } catch (err) {

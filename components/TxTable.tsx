@@ -2,7 +2,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { clsx } from "clsx";
 import { useTxStore } from "@/lib/store";
-import { currencyBRL } from "@/lib/utils/currency";
 import Button from "@/components/ds/Button";
 import Modal from "@/components/ds/Modal";
 import TxForm from "@/components/forms/TxForm";
@@ -13,6 +12,7 @@ import Badge from "./ds/Badge";
 import Input from "./ds/Input";
 import { useSnackbar } from "@/components/ds/SnackbarProvider";
 import { brDateFromAny, txRawDate } from "@/lib/utils/date";
+import { formatBRL } from "@/src/core/money";
 
 export default function TxTable() {
   const { transactions, fetchAll, cancel, restore, patch, add, loading, setNotifier } = useTxStore();
@@ -32,9 +32,13 @@ export default function TxTable() {
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
     return transactions.filter(t =>
-      t.description.toLowerCase().includes(q) || t.type.toLowerCase().includes(q)
+      t.description?.toLowerCase().includes(q) || t.type.toLowerCase().includes(q)
     );
   }, [transactions, query]);
+
+  useEffect(() => {
+    console.log('filtered', filtered);
+  }, [filtered]);
 
   const tLabel = {
     type: { deposit: "Depósito", transfer: "Transferência", payment: "Pagamento", withdraw: "Saque", pix: "Pix" },
@@ -76,7 +80,7 @@ export default function TxTable() {
 
           <tbody className="text-fg">
             {filtered.map((t, idx) => {
-              const raw = txRawDate(t)
+              const raw = txRawDate(t as any);
               const date = brDateFromAny(raw);
               const negative = negativeTypes.has(t.type);
 
@@ -95,12 +99,12 @@ export default function TxTable() {
                     <span title={t.description}>{t.description}</span>
                   </Td>
 
-                  <Td className="capitalize">{tLabel.type[t.type]}</Td>
+                  <Td className="capitalize">{tLabel.type[t.type as keyof typeof tLabel.type] ?? t.type}</Td>
                   <Td right className={clsx(
                     "tabular-nums font-medium",
                     negative ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"
                   )}>
-                    {negative ? "-" : ""}{currencyBRL(t.amount)}
+                    {negative ? "-" : ""}{formatBRL(t.amount)}
                   </Td>
                   <Td>
                     <Badge
@@ -119,7 +123,7 @@ export default function TxTable() {
                           : undefined
                       }
                     >
-                      {tLabel.status[t.status]}
+                      {tLabel.status[t.status as keyof typeof tLabel.status] ?? t.status}
                     </Badge>
                   </Td>
                   <Td right>
@@ -137,19 +141,20 @@ export default function TxTable() {
                             >
                               Editar
                             </Button>
-                            {t.status === "cancelled" ? (
-                              <Button variant="ghost" onClick={() => restore(t.id)}>Restaurar</Button>
-                            ) : (
-                              <Button
-                                variant={deleteDisabled ? "disabled" : "danger"}
-                                disabled={deleteDisabled}
-                                onClick={() => cancel(t.id)}
-                                title={deleteDisabled ? deleteReason : "Excluir"}
-                                aria-disabled={deleteDisabled}
-                              >
-                                Cancelar
-                              </Button>
-                            )}
+                            {t.status === "cancelled" ?
+                              t.locked ? null : (
+                                <Button variant="ghost" onClick={() => restore(t.id)}>Batata</Button>
+                              ) : (
+                                <Button
+                                  variant={deleteDisabled ? "disabled" : "danger"}
+                                  disabled={deleteDisabled}
+                                  onClick={() => cancel(t.id)}
+                                  title={deleteDisabled ? deleteReason : "Excluir"}
+                                  aria-disabled={deleteDisabled}
+                                >
+                                  Cancelar
+                                </Button>
+                              )}
                           </>
                         );
                       })()}
